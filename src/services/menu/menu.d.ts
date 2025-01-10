@@ -5,6 +5,9 @@ export type FoodItem = {
   ingredient: string;
   price: number;
   food_image: string;
+  onAdd?: () => void;
+  onRemove?: () => void;
+  quantity?: number;
 };
 
 export type FoodCategory = {
