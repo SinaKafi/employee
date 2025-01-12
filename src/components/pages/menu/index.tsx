@@ -1,233 +1,326 @@
-import { ReactElement, useEffect, useRef, useState } from "react";
+import {
+  ReactElement,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import dayjs from "dayjs";
 import useApi from "@/hooks/useQuery";
 import { services } from "@/services";
 import FoodCard from "@/components/cards/FoodCard";
 import useMyStore from "@/store/store";
 import FoodCardInSideBar from "@/components/cards/FoodCardInSideBar";
-import { Button, Heading, Text } from "@chakra-ui/react";
+import {
+  Button,
+  Heading,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Text,
+} from "@chakra-ui/react";
 import Toman from "@/components/common/Toman";
 import SVGFileDescription from "@/components/svgs/SVGFileDescription";
 import getCurrentWeekDays from "@/utils/getDayOfWeek";
+import SVGChevronLeft from "@/components/svgs/SVGChevronLeft";
+import SVGCurrentLocation from "@/components/svgs/SVGCurrentLocation";
+import SVGChevronDown from "@/components/svgs/SVGChevronDown";
+
 const loaderArray = [...Array(40)];
 
 const Index = (): ReactElement => {
   const [today, setToday] = useState(
     dayjs().calendar("jalali").format("DD/MM/YYYY")
   );
-  let currentWeek = getCurrentWeekDays();
+  const currentWeek = useMemo(() => getCurrentWeekDays(), []);
+  const foodListCategoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>(
+    {}
+  );
+  const { profileData } = useMyStore((state) => state.userSlice.state.userData);
+
   const { data, isLoading } = useApi(
     {
       apiFetcher: services.menuServices.getFoodMenu,
-      options: {
-        params: {
-          date: "1403-10-5",
-        },
-      },
+      options: { params: { date: today.split("/").reverse().join("-") } },
     },
     [today]
   );
 
   const [activeCategory, setActiveCategory] = useState<string>("");
-  const foodListCategoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>(
-    {}
+  const [activeAddress, setActiveAddress] = useState<string>(
+    profileData["address.id"]
   );
 
   useEffect(() => {
-    if (!data || data.length === 0) {
-      console.error("No data available to observe.");
-      return;
-    }
+    if (!data || data.length === 0) return;
 
-    const options = {
-      root: null,
-      rootMargin: "5px",
-      threshold: 0.5,
-    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveCategory(entry.target.id);
+          }
+        });
+      },
+      { root: null, rootMargin: "5px", threshold: 0.5 }
+    );
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveCategory(entry.target.id);
-        }
-      });
-    }, options);
-
-    Object.values(foodListCategoryRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
+    Object.values(foodListCategoryRefs.current).forEach(
+      (ref) => ref && observer.observe(ref)
+    );
     return () => observer.disconnect();
   }, [data]);
 
-  const handleCategoryClick = (category: string) => {
+  const handleCategoryClick = useCallback((category: string) => {
     const section = foodListCategoryRefs.current[category];
     if (section) {
+      setActiveCategory(category);
       section.scrollIntoView({ behavior: "smooth", inline: "center" });
     }
-  };
-  const { addOrder, decrement } = useMyStore(
-    (state) => state.orderSlice.action
+  }, []);
+
+  const {
+    state: { orders },
+    action: { addOrder, decrement },
+  } = useMyStore((state) => state.orderSlice);
+
+  const userOrders = useMemo(
+    () =>
+      data
+        ?.flatMap((item) => item.food)
+        .filter((food) => orders[today]?.[food.id]) || [],
+    [data, orders, today]
   );
 
-  const { orders } = useMyStore((state) => state.orderSlice.state);
+  const { totalPrice, totalQuantity } = useMemo(() => {
+    const total = userOrders.reduce(
+      (acc, food) => ({
+        price: acc.price + food.price * orders[today][food.id].count,
+        quantity: acc.quantity + orders[today][food.id].count,
+      }),
+      { price: 0, quantity: 0 }
+    );
 
-  let ordersList = Object.keys(orders[today] ?? {});
+    return { totalPrice: total.price, totalQuantity: total.quantity };
+  }, [userOrders, orders, today]);
+  // let category = data
+  //   ? [...data, ...data, ...data, ...data, ...data, ...data]
+  //   : [];
 
-  const userOrders =
-    data
-      ?.flatMap((item) => item.food)
-      .filter((filtered) => ordersList.includes(String(filtered?.id))) || [];
-
-  const totalPrice = userOrders?.reduce(
-    (prev, curr) => +prev + +curr.price * orders[today][curr.id].count,
-    0
-  );
-
-  const totalQuantity = userOrders?.reduce(
-    (prev, curr) => +prev + 1 * orders[today][curr.id].count,
-    0
-  );
   return (
-    <div className="grid grid-cols-4 grid-rows-12 gap-24 min-h-[95vh] max-h-[95vh] overflow-hidden  ">
-      <div className="col-span-3 row-span-1 grid grid-cols-7 gap-8 pl-16">
-        {currentWeek.map((item) => (
-          <div
-            key={item.date}
-            className={`bg-white gap-4 inline-flex p-8 pl-28 rounded-lg cursor-pointer ${
-              item?.date === today && "!bg-primary-500 !text-white"
-            }`}
-            onClick={() => {
-              setToday(item.date);
-            }}
-          >
-            <Text
-              variant={"md"}
-              className={`rounded-xl px-8 bg-alpha-border ${
-                item?.date === today && "!bg-white !text-gray"
-              }`}
-            >
-              {item.day}
-            </Text>
-            <Text
-              variant={"md"}
-              className={item?.date === today && "!bg-primary-500 !text-white"}
-            >
-              {item.dayName}
-            </Text>
-          </div>
-        ))}
-      </div>
-      <div className="col-span-4 grid grid-cols-4 gap-16">
-        <div className="col-span-3 flex flex-col gap-24 grid-rows-12">
-          <div className="row-span-1 w-full bg-white px-4 py-8 rounded-lg overflow-x-auto overflow-y-hidden">
-            <div className="flex flex-nowrap">
-              {isLoading &&
-                loaderArray.map((item) => (
-                  <div
-                    className={`min-w-[25%] bg-alpha-text10 animate-pulse h-32 inline-flex p-24 mx-8 px-18 rounded-lg cursor-pointer `}
-                  ></div>
-                ))}
-              {data?.map((item) => (
-                <div
-                  key={item.category}
-                  className={`min-w-[25%] bg-white inline-flex p-10 mx-8 px-18 rounded-lg cursor-pointer ${
-                    activeCategory === item.category
-                      ? "!bg-alpha-primaryBg !text-primary-500"
-                      : ""
-                  }`}
-                  onClick={() => handleCategoryClick(item.category)}
-                >
-                  <Text className="!text-center w-full !text-current">
-                    {" "}
-                    {item.category}
-                  </Text>
-                </div>
-              ))}
-            </div>
-          </div>{" "}
-          <div className="overflow-y-scroll max-h-[70vh]">
-            {isLoading && (
-              <div className=" grid grid-cols-3 gap-8 my-32">
-                {loaderArray.map((item) => (
-                  <div
-                    className={`min-w-[50%] bg-alpha-text10 animate-pulse h-90 inline-flex p-10 mx-2 px-18 rounded-lg cursor-pointer `}
-                  ></div>
-                ))}
-              </div>
-            )}
-            {data?.map((item) => (
+    <div className="flex flex-col gap-16 overflow-hidden">
+      <div className="grid grid-cols-7 gap-16">
+        <div className="col-span-5 ">
+          <div className="grid grid-cols-7 gap-16 ">
+            {currentWeek.map((item) => (
               <div
-                id={item.category}
-                key={item.category}
-                ref={(el) => (foodListCategoryRefs.current[item.category] = el)}
-                className="category-section grid grid-cols-3 gap-8 my-32"
+                key={item.date}
+                className={`bg-white gap-4 flex items-center p-8 pl-28 shadow-cards rounded-lg cursor-pointer h-44 ${
+                  item.date === today ? "!bg-primary-500 !text-white" : ""
+                }`}
+                onClick={() => setToday(item.date)}
               >
-                {item.food.map((foodItem) => (
-                  <FoodCard
-                    key={foodItem.id}
-                    {...foodItem}
-                    onAdd={() => addOrder({ date: today, id: foodItem.id })}
-                    onRemove={() => decrement({ date: today, id: foodItem.id })}
-                    quantity={orders[today]?.[foodItem.id]?.count ?? 0}
-                  />
-                ))}
+                <Text
+                  variant="md"
+                  className={`rounded-full bg-alpha-border !h-28 min-h-28 !w-28 min-w-28 !text-center ${item.date === today ? "!bg-white !text-gray" : ""}`}
+                >
+                  {item.day}
+                </Text>
+                <Text
+                  variant="md"
+                  className={
+                    item.date === today ? "!bg-primary-500 !text-white" : ""
+                  }
+                >
+                  {item.dayName}
+                </Text>
               </div>
             ))}
           </div>
         </div>
-        {isLoading && (
-          <div
-            className={`min-w-[50%] bg-alpha-text10 animate-pulse h-[70vh] inline-flex p-10 mx-2 px-18 rounded-lg cursor-pointer `}
-          ></div>
-        )}
-        {!!userOrders.length ? (
-          <div className="bg-white px-16 rounded-lg pb-16 flex flex-col">
-            <Heading size={"base"} className="!py-16 border-b">
-              سفارشات شما
-            </Heading>
-            <div className="overflow-y-scroll max-h-[50vh] flex-1 min-h-[50px]">
-              {userOrders.reverse().map((item) => (
-                <FoodCardInSideBar
-                  key={item.id}
-                  {...item}
-                  onAdd={() => addOrder({ date: today, id: item.id })}
-                  onRemove={() => decrement({ date: today, id: item.id })}
-                  quantity={orders[today]?.[item.id]?.count ?? 0}
-                />
-              ))}
-            </div>
-            <div className="flex flex-col gap-16 py-16 border-t justify-between">
-              <div className="flex items-center justify-between">
-                <Text size={"sm"} className="leading-4">
-                  جمع سفارش امروز ({totalQuantity})
-                </Text>
-                <Toman price={totalPrice} />
-              </div>
-              <div className="flex items-center justify-between">
-                <Text size={"sm"} className="leading-4">
-                  سهم شرکت{" "}
-                </Text>
-              </div>{" "}
-              <div className="flex items-center justify-between">
-                <Text size={"sm"} className="leading-4">
-                  سهم شما{" "}
-                </Text>
-              </div>
-              <Button>تایید نهایی</Button>
-            </div>
+        <div className="col-span-2"></div>
+        <div className="col-span-5">
+          <div className="flex overflow-hidden items-center !bg-white p-8 relative rounded-lg">
+            {isLoading
+              ? loaderArray.map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-alpha-text10 animate-pulse h-32 w-24 mx-4 rounded-lg cursor-pointer"
+                  />
+                ))
+              : data?.map((item) => (
+                  <Text
+                    key={item.category}
+                    className={`!min-w-120 !max-w-120 !text-current bg-white inline-flex mx-4 px-6 py-4 rounded-lg cursor-pointer h-40 items-center justify-center text-center ${
+                      activeCategory === item.category
+                        ? "!bg-alpha-primaryBg !text-primary-500"
+                        : ""
+                    }`}
+                    onClick={() => handleCategoryClick(item.category)}
+                  >
+                    {item.category}
+                  </Text>
+                ))}
+            <SVGChevronLeft className="flex items-center justify-center absolute bg-white left-0 rounded-l-lg cursor-pointer z-10 h-60" />
           </div>
-        ) : (
-          <div className="bg-white rounded-lg max-h-[30vh] gap-16 flex flex-col items-center py-16">
-            <SVGFileDescription
-              className="!text-alpha-text20 !text-xl"
-              width={32}
-              height={32}
-            />
-            <Text variant={"sm"} className="!text-alpha-text20">
-              در این تاریخ هیچ سفارشی ثبت نشده.{" "}
-            </Text>
+        </div>
+        <div className="col-span-2 px-4">
+          <div className="bg-white flex items-center justify-center p-8 rounded-lg max-h-60">
+            <Menu matchWidth>
+              {({ isOpen }) => (
+                <>
+                  <MenuButton className="border-none w-full py-8">
+                    <div className="w-full grid grid-cols-8 gap-4 content-center justify-center  items-center">
+                      <div className="col-span-1 w-32 h-32 bg-greyBlue rounded-lg p-4 ">
+                        <SVGCurrentLocation className="text-[#BECAD8]" />
+                      </div>
+                      <div className="col-span-6">
+                        <Text className="!text-start max-w-[90%] !truncate !font-medium !text-12">
+                          {
+                            profileData?.addresses?.find(
+                              (item) => item.id == +activeAddress
+                            )?.name
+                          }
+                        </Text>
+                        <Text className="!text-start max-w-[90%] !truncate !font-normal !text-10">
+                          {
+                            profileData?.addresses?.find(
+                              (item) => item.id == +activeAddress
+                            )?.address
+                          }
+                        </Text>
+                      </div>
+                      <div className="col-span-1 flex items-center justify-start mr-auto">
+                        <SVGChevronDown
+                          className={isOpen ? "rotate-180" : ""}
+                        />
+                      </div>
+                    </div>
+                  </MenuButton>
+                  <MenuList>
+                    {profileData.addresses.map((item) => (
+                      <MenuItem
+                        className={`overflow-hidden py-4 mb-4 ${item.id == +activeAddress && "!bg-greyBlue"}`}
+                        onClick={() => {
+                          setActiveAddress(String(item.id));
+                        }}
+                      >
+                        <div
+                          className={`w-full flex flex-col items-start justify-start !relative`}
+                        >
+                          <Text
+                            className={`!text-start min-w-[90%] max-w-[90%] !truncate !font-medium !text-12 ${item.id == +activeAddress && "!text-alert"}`}
+                          >
+                            {item.name}
+                          </Text>
+                          <Text className="!text-start min-w-[90%] max-w-[90%] !truncate !font-normal !text-10">
+                            {item.address}
+                          </Text>
+                          <div
+                            className={`absolute w-10 rounded-md  top-1/2 -translate-y-1/2 translate-x-17 h-47 ${
+                              item.id == +activeAddress && "!bg-alert"
+                            }`}
+                          ></div>{" "}
+                        </div>
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </>
+              )}
+            </Menu>
           </div>
-        )}
+        </div>
+        <div className="col-span-5">
+          <div className="overflow-y-auto max-h-[75vh]">
+            {isLoading ? (
+              <div className="grid grid-cols-3 gap-8 justify-center">
+                {loaderArray.map((_, index) => (
+                  <div
+                    key={index}
+                    className="min-w-[50%] bg-alpha-text10 animate-pulse h-40 mx-2 p-4 rounded-lg cursor-pointer"
+                  />
+                ))}
+              </div>
+            ) : (
+              data?.map((item, index) => (
+                <div
+                  id={item.category}
+                  key={item.category}
+                  ref={(el) =>
+                    (foodListCategoryRefs.current[item.category] = el)
+                  }
+                  className={`grid grid-cols-3 gap-8 justify-center ${index > 0 && "my-32"}`}
+                >
+                  {item.food.map((foodItem) => (
+                    <FoodCard
+                      key={foodItem.id}
+                      {...foodItem}
+                      onAdd={() => addOrder({ date: today, id: foodItem.id })}
+                      onRemove={() =>
+                        decrement({ date: today, id: foodItem.id })
+                      }
+                      quantity={orders[today]?.[foodItem.id]?.count ?? 0}
+                    />
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="col-span-2 px-4">
+          {isLoading ? (
+            <div className="min-w-[50%] bg-alpha-text10 animate-pulse h-[60vh] inline-flex p-10 mx-2 px-18 rounded-lg cursor-pointer" />
+          ) : userOrders.length ? (
+            <div className="bg-white px-16 rounded-lg pb-16 flex flex-col">
+              <Heading size="base" className="!py-16 border-b">
+                سفارشات شما
+              </Heading>
+              <div className="overflow-y-scroll max-h-[40vh] flex-1 min-h-[50px]">
+                {userOrders.reverse().map((item) => (
+                  <FoodCardInSideBar
+                    key={item.id}
+                    {...item}
+                    onAdd={() => addOrder({ date: today, id: item.id })}
+                    onRemove={() => decrement({ date: today, id: item.id })}
+                    quantity={orders[today]?.[item.id]?.count ?? 0}
+                  />
+                ))}
+              </div>
+              <div className="flex flex-col gap-16 py-16 border-t justify-between">
+                <div className="flex items-center justify-between">
+                  <Text size="sm" className="leading-4">
+                    جمع سفارش امروز ({totalQuantity})
+                  </Text>
+                  <Toman price={totalPrice} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Text size="sm" className="leading-4">
+                    سهم شرکت
+                  </Text>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Text size="sm" className="leading-4">
+                    سهم شما
+                  </Text>
+                </div>
+                <Button>تایید نهایی</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg max-h-[30vh] gap-16 flex flex-col items-center py-16">
+              <SVGFileDescription
+                className="!text-alpha-text20 !text-xl"
+                width={32}
+                height={32}
+              />
+              <Text variant="sm" className="!text-alpha-text20">
+                در این تاریخ هیچ سفارشی ثبت نشده.
+              </Text>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

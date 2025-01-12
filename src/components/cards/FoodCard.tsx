@@ -30,7 +30,7 @@ const FoodCard: React.FC<FoodItem> = ({
         </div>
       </div>
       <div className="grid grid-cols-2 justify-center content-between">
-        <div className="col-span-1">
+        <div className="col-span-1 max-w-[95px]">
           {quantity ? (
             <div className="border border-primary-500 rounded-lg gap-[10px] flex px-8 items-center justify-between">
               <SVGPlus

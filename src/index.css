@@ -59,7 +59,7 @@
 }
 * {
   box-sizing: border-box;
-
+  font-display: "swap";
   font-family: "Yekanbakh" !important;
   direction: rtl !important;
 }
@@ -88,4 +88,8 @@
 }
 .imageAvatar img {
   border-radius: 8px !important;
+  -webkit-border-radius: 8px !important;
+  -moz-border-radius: 8px !important;
+  -ms-border-radius: 8px !important;
+  -o-border-radius: 8px !important;
 }

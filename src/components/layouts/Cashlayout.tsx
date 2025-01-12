@@ -51,7 +51,13 @@ const CashLayout = ({ children }: PropsWithChildren) => {
         {/* <div className="flex container max-w-[1440px]  w-full "> */}
         <div className="flex container min-w-full !pr-0 w-full ">
           <Sidebar mustCollapse />
-          <main className="flex-1  w-full mx-auto pr-30 30 py-30  flex-grow max-h-[95vh] min-h-[95vh]">
+          <main
+            className="flex-1 p-10 w-full mx-auto pr-30 here"
+            style={{
+              minHeight: "calc(100vh - 63px)",
+              maxHeight: "calc(100vh - 63px)",
+            }}
+          >
             {children}
           </main>
         </div>

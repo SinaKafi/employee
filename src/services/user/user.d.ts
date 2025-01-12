@@ -65,6 +65,25 @@ export interface IEmployeeDetail {
   code: string;
   is_active: boolean;
 }
+
+interface ICurrentUserAddress {
+  id: number;
+  name: string;
+  address: string;
+  company_id: string | number;
+  is_default: string | number;
+  lat: string;
+  long: string;
+  province: string;
+  district: string;
+  city: string;
+  unit: string;
+  plaque: string;
+  postcode: string;
+  deleted_at: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+}
 export interface currentUser {
   id: number;
   name: string;
@@ -73,6 +92,7 @@ export interface currentUser {
   image: string | null;
   company_id: number;
   company_name: string;
+  addresses: ICurrentUserAddress[];
   address_id: number;
   address: string;
   tel: string;

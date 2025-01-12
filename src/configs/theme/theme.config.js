@@ -259,6 +259,8 @@ export default {
       "0px 2px 8px 0px rgba(148, 154, 159, 0.10), 0px -2px 8px 0px rgba(148, 154, 159, 0.10);",
 
     haeder: "0px 4px 4px 0px rgba(216, 227, 229, 1)",
+    cards:
+      "0px 2px 8px 0px rgba(148, 154, 159, 0.10), 0px -2px 8px 0px rgba(148, 154, 159, 0.10);",
   },
   borders: {
     DEFAULT: "1px",
