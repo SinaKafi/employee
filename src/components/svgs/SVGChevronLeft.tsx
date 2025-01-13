@@ -1,7 +1,13 @@
-const SVGChevronLeft = ({ width = 24, height = 24, className = "" }) => (
+const SVGChevronLeft = ({
+  width = 24,
+  height = 24,
+  className = "",
+  onClick = () => {},
+}) => (
   <svg
     width={width}
     height={height}
+    onClick={onClick}
     viewBox="0 0 24 24"
     fill="currentColor"
     className={className}

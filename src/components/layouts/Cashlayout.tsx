@@ -43,26 +43,21 @@ const CashLayout = ({ children }: PropsWithChildren) => {
     </div>
   ) : (
     <Box
-      fontFamily={["Yekanbakh-fa,  Yekanbakh "]}
-      className="flex flex-col h-screen overflow-hidden"
+      fontFamily={["Yekanbakh-fa", "Yekanbakh"]}
+      className="flex flex-col h-screen max-h-screen overflow-hidden"
     >
       <Header />
-      <div className=" bg-alpha-blueGray">
-        {/* <div className="flex container max-w-[1440px]  w-full "> */}
-        <div className="flex container min-w-full !pr-0 w-full ">
+      <div className="bg-alpha-blueGray overflow-hidden flex-1">
+        <div className="flex container min-w-full !pr-0 w-full overflow-hidden">
+          {/* Sidebar section */}
           <Sidebar mustCollapse />
-          <main
-            className="flex-1 p-10 w-full mx-auto pr-30 here"
-            style={{
-              minHeight: "calc(100vh - 63px)",
-              maxHeight: "calc(100vh - 63px)",
-            }}
-          >
-            {children}
+
+          {/* Main content section */}
+          <main className="flex-1 px-10 w-full mx-auto pr-30 mt-20 overflow-auto">
+            <div>{children}</div>
           </main>
         </div>
       </div>
-
       <MyModal
         isOpen={isOpen}
         onClose={onClose}
@@ -93,7 +88,7 @@ const CashLayout = ({ children }: PropsWithChildren) => {
             </div>
           </div>
         </div>
-      </MyModal>
+      </MyModal>{" "}
     </Box>
   );
 };

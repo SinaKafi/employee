@@ -6,14 +6,14 @@ const Header = () => {
   const { state } = useMyStore((state) => state.userSlice);
 
   return (
-    <div className="w-full z-50 min-h-63 max-h-63 shadow-haeder h-63">
-      <div className=" flex px-24 items-center justify-between  container w-full min-w-full  ml-auto">
+    <div className="w-full z-50 min-h-63 max-h-63 shadow-haeder ">
+      <div className="flex px-24 items-center justify-between container w-full min-w-full  ml-auto">
         <div>
           <img src="/logo.svg" className="block object-cover" width={180} />
         </div>
         <div className="flex max-w-1/3 justify-between items-center gap-38">
           <div className="flex gap-6 items-center">
-            <div className="!rounded-lg bg-greyBlue !text-dark-primary-500   !p-4   ">
+            <div className="!rounded-lg bg-greyBlue !text-dark-primary-500 !p-4">
               <SVGbuilding className="text-[#BECAD8] w-24 h-24 mx-auto" />
             </div>
             <Text variant={"sm"}>

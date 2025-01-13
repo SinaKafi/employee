@@ -35,11 +35,13 @@ const Index = (): ReactElement => {
     dayjs().calendar("jalali").format("DD/MM/YYYY")
   );
   const currentWeek = useMemo(() => getCurrentWeekDays(), []);
+
   const foodListCategoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>(
     {}
   );
+  const foodListContainerRef = useRef(null);
+  const categoryRef = useRef(null);
   const { profileData } = useMyStore((state) => state.userSlice.state.userData);
-
   const { data, isLoading } = useApi(
     {
       apiFetcher: services.menuServices.getFoodMenu,
@@ -75,9 +77,19 @@ const Index = (): ReactElement => {
 
   const handleCategoryClick = useCallback((category: string) => {
     const section = foodListCategoryRefs.current[category];
-    if (section) {
+    const container = foodListContainerRef.current;
+
+    if (section && container) {
+      const offset = section.offsetTop - container.offsetTop;
+
+      container.scrollTo({
+        top: offset,
+        behavior: "smooth",
+      });
+
       setActiveCategory(category);
-      section.scrollIntoView({ behavior: "smooth", inline: "center" });
+    } else {
+      console.error(`Section with id "${category}" not found.`);
     }
   }, []);
 
@@ -105,19 +117,24 @@ const Index = (): ReactElement => {
 
     return { totalPrice: total.price, totalQuantity: total.quantity };
   }, [userOrders, orders, today]);
-  // let category = data
-  //   ? [...data, ...data, ...data, ...data, ...data, ...data]
-  //   : [];
 
+  const handleScrollLeft = () => {
+    if (categoryRef.current) {
+      categoryRef.current.scrollTo({
+        left: categoryRef.current.scrollLeft - 200,
+        behavior: "smooth",
+      });
+    }
+  };
   return (
     <div className="flex flex-col gap-16 overflow-hidden">
       <div className="grid grid-cols-7 gap-16">
         <div className="col-span-5 ">
-          <div className="grid grid-cols-7 gap-16 ">
+          <div className="grid grid-cols-7 gap-8 ">
             {currentWeek.map((item) => (
               <div
                 key={item.date}
-                className={`bg-white gap-4 flex items-center p-8 pl-28 shadow-cards rounded-lg cursor-pointer h-44 ${
+                className={`bg-white gap-4 flex items-center  px-4 py-8 pl-28 shadow-cards rounded-lg cursor-pointer h-44 ${
                   item.date === today ? "!bg-primary-500 !text-white" : ""
                 }`}
                 onClick={() => setToday(item.date)}
@@ -141,8 +158,11 @@ const Index = (): ReactElement => {
           </div>
         </div>
         <div className="col-span-2"></div>
-        <div className="col-span-5">
-          <div className="flex overflow-hidden items-center !bg-white p-8 relative rounded-lg">
+        <div className="flex items-center justify-between rounded-lg col-span-5 ">
+          <div
+            className="flex overflow-hidden items-center !bg-white p-8 relative rounded-r-lg w-full h-full max-h-60"
+            ref={categoryRef}
+          >
             {isLoading
               ? loaderArray.map((_, index) => (
                   <div
@@ -162,9 +182,12 @@ const Index = (): ReactElement => {
                   >
                     {item.category}
                   </Text>
-                ))}
-            <SVGChevronLeft className="flex items-center justify-center absolute bg-white left-0 rounded-l-lg cursor-pointer z-10 h-60" />
+                ))}{" "}
           </div>
+          <SVGChevronLeft
+            className="flex items-center top-0 justify-center shadow-neumorphism bg-white left-0 rounded-l-lg cursor-pointer z-10 h-full"
+            onClick={handleScrollLeft}
+          />
         </div>
         <div className="col-span-2 px-4">
           <div className="bg-white flex items-center justify-center p-8 rounded-lg max-h-60">
@@ -177,14 +200,14 @@ const Index = (): ReactElement => {
                         <SVGCurrentLocation className="text-[#BECAD8]" />
                       </div>
                       <div className="col-span-6">
-                        <Text className="!text-start max-w-[90%] !truncate !font-medium !text-12">
+                        <Text className="!text-start leading-4 max-w-[90%] !truncate !font-medium !text-12">
                           {
                             profileData?.addresses?.find(
                               (item) => item.id == +activeAddress
                             )?.name
                           }
                         </Text>
-                        <Text className="!text-start max-w-[90%] !truncate !font-normal !text-10">
+                        <Text className="!text-start leading-4 max-w-[90%] !truncate !font-normal !text-10">
                           {
                             profileData?.addresses?.find(
                               (item) => item.id == +activeAddress
@@ -202,7 +225,9 @@ const Index = (): ReactElement => {
                   <MenuList>
                     {profileData.addresses.map((item) => (
                       <MenuItem
-                        className={`overflow-hidden py-4 mb-4 ${item.id == +activeAddress && "!bg-greyBlue"}`}
+                        className={`overflow-hidden py-4 mb-4 ${item.id == +activeAddress && "!bg-greyBlue"}
+                        hover:!bg-greyBlue hover:!text-white 
+                        `}
                         onClick={() => {
                           setActiveAddress(String(item.id));
                         }}
@@ -211,11 +236,11 @@ const Index = (): ReactElement => {
                           className={`w-full flex flex-col items-start justify-start !relative`}
                         >
                           <Text
-                            className={`!text-start min-w-[90%] max-w-[90%] !truncate !font-medium !text-12 ${item.id == +activeAddress && "!text-alert"}`}
+                            className={`!text-start leading-4 min-w-[90%] max-w-[90%] !truncate !font-medium !text-12 ${item.id == +activeAddress && "!text-alert"}`}
                           >
                             {item.name}
                           </Text>
-                          <Text className="!text-start min-w-[90%] max-w-[90%] !truncate !font-normal !text-10">
+                          <Text className="!text-start leading-4 min-w-[90%] max-w-[90%] !truncate !font-normal !text-10">
                             {item.address}
                           </Text>
                           <div
@@ -233,7 +258,10 @@ const Index = (): ReactElement => {
           </div>
         </div>
         <div className="col-span-5">
-          <div className="overflow-y-auto max-h-[75vh]">
+          <div
+            className="overflow-y-auto max-h-[75vh]"
+            ref={foodListContainerRef}
+          >
             {isLoading ? (
               <div className="grid grid-cols-3 gap-8 justify-center">
                 {loaderArray.map((_, index) => (
@@ -271,13 +299,13 @@ const Index = (): ReactElement => {
         </div>
         <div className="col-span-2 px-4">
           {isLoading ? (
-            <div className="min-w-[50%] bg-alpha-text10 animate-pulse h-[60vh] inline-flex p-10 mx-2 px-18 rounded-lg cursor-pointer" />
+            <div className="min-w-[50%] w-full bg-alpha-text10 animate-pulse h-[60vh] inline-flex p-10 mx-2 px-18 rounded-lg cursor-pointer" />
           ) : userOrders.length ? (
             <div className="bg-white px-16 rounded-lg pb-16 flex flex-col">
               <Heading size="base" className="!py-16 border-b">
                 سفارشات شما
               </Heading>
-              <div className="overflow-y-scroll max-h-[40vh] flex-1 min-h-[50px]">
+              <div className="overflow-y-scroll max-h-[37vh] flex-1 min-h-[45px]">
                 {userOrders.reverse().map((item) => (
                   <FoodCardInSideBar
                     key={item.id}

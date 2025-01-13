@@ -93,3 +93,7 @@
   -ms-border-radius: 8px !important;
   -o-border-radius: 8px !important;
 }
+.max-h {
+  min-height: calc(100vh - 63px);
+  max-height: calc(100vh - 63px);
+}
