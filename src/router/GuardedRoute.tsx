@@ -15,6 +15,7 @@ export default function GuardedRoute({ component, guards = [] }: Props) {
   let redirectPath = null;
   for (let i = 0; i < guards.length; i++) {
     const res = guards[i]();
+    console.log(res);
     if (typeof res === "string") {
       canAccess = false;
       redirectPath = res;

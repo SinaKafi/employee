@@ -10,7 +10,7 @@ export function isLoggedIn(): GuardFnResult {
 
 export function isNotLoggedIn(): GuardFnResult {
   if (localStorage.getItem("token")) {
-    return paths.home;
+    return paths.menu.index;
   }
   return true;
 }

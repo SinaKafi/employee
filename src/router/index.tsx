@@ -19,7 +19,11 @@ const Router = () => (
           key={r.path}
         />
       ))}
-      <Route path="*" element={<Navigate to={"/menu"} replace />} />
+      {localStorage.getItem("token") ? (
+        <Route path="*" element={<Navigate to={"/menu"} replace />} />
+      ) : (
+        <Route path="*" element={<Navigate to={"/login"} replace />} />
+      )}
     </Routes>
   </Wrapper>
 );

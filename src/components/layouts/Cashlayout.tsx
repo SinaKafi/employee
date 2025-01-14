@@ -1,5 +1,5 @@
 import { Box, Button, Heading } from "@chakra-ui/react";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect } from "react";
 import Sidebar from "../sidebar/Sidebar";
 import Header from "./Header";
 import useRouterDisclosure from "@/hooks/useRouterDisclosure";
@@ -12,6 +12,10 @@ const CashLayout = ({ children }: PropsWithChildren) => {
   const { isOpen, onClose } = useRouterDisclosure("exit");
   const navigate = useNavigate();
   const { data, isLoading } = useCurrentUser();
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) navigate("/login");
+  }, [navigate]);
 
   return isLoading || !!!data ? (
     <div>
