@@ -2,8 +2,6 @@ import SVGbuilding from "@/components/svgs/SVGbuilding";
 import SVGClipboardList from "@/components/svgs/SVGClipboardList";
 import SVGFileDescription from "@/components/svgs/SVGFileDescription";
 import SVGLogOut from "@/components/svgs/SVGLogOut";
-
-import SVGUser from "@/components/svgs/SVGUser";
 import { JSXElementConstructor } from "react";
 
 export interface IbaseMenuItem {

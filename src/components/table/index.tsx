@@ -53,7 +53,7 @@ const CustomTable = <TData,>({
       ...updates,
     }),
     {
-      query: parsedSearchTerm.query || "",
+      query: parsedSearchTerm?.query || "",
       perPage: parsedSearchTerm?.perPage || "10",
       page: parsedSearchTerm?.page || "1",
     }
@@ -128,7 +128,11 @@ const CustomTable = <TData,>({
         </div>
         <div className="w-1/2 lg:w-1/4 flex justify-between items-center">
           <div className="flex gap-8 items-center">
-            <Text variant="sm-regular" color="alpha.text20">
+            <Text
+              variant="sm-regular"
+              color="alpha.text20"
+              className="whitespace-pre"
+            >
               تعداد نمایش
             </Text>
             <CustomSelect
@@ -215,7 +219,7 @@ const CustomTable = <TData,>({
           [...Array(+inputValue.perPage)].map((_, index) => (
             <Skeleton key={index} className="w-full h-45 my-4" />
           ))}
-        {!isLoading && !!!data && (
+        {!isLoading && (!!!data || !data.length) && (
           <Heading className="mx-auto text-center mt-50">
             No data to show
           </Heading>

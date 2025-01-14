@@ -112,7 +112,7 @@ function useApi<TResponse, TParams>(
       ...updates,
     }),
     {
-      isLoading: autoFetch && enabled ? true : false,
+      isLoading: !!(autoFetch && enabled),
       isSuccess: false,
       isError: false,
       error: null,

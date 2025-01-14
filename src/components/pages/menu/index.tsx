@@ -1,16 +1,5 @@
-import {
-  ReactElement,
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
-import dayjs from "dayjs";
-import useApi from "@/hooks/useQuery";
-import { services } from "@/services";
+import { ReactElement } from "react";
 import FoodCard from "@/components/cards/FoodCard";
-import useMyStore from "@/store/store";
 import FoodCardInSideBar from "@/components/cards/FoodCardInSideBar";
 import {
   Button,
@@ -23,137 +12,75 @@ import {
 } from "@chakra-ui/react";
 import Toman from "@/components/common/Toman";
 import SVGFileDescription from "@/components/svgs/SVGFileDescription";
-import getCurrentWeekDays from "@/utils/getDayOfWeek";
 import SVGChevronLeft from "@/components/svgs/SVGChevronLeft";
 import SVGCurrentLocation from "@/components/svgs/SVGCurrentLocation";
 import SVGChevronDown from "@/components/svgs/SVGChevronDown";
+import useMenuLogic from "./useMenuLogic";
 
 const loaderArray = [...Array(40)];
 
 const Index = (): ReactElement => {
-  const [today, setToday] = useState(
-    dayjs().calendar("jalali").format("DD/MM/YYYY")
-  );
-  const currentWeek = useMemo(() => getCurrentWeekDays(), []);
-
-  const foodListCategoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>(
-    {}
-  );
-  const foodListContainerRef = useRef(null);
-  const categoryRef = useRef(null);
-  const { profileData } = useMyStore((state) => state.userSlice.state.userData);
-  const { data, isLoading } = useApi(
-    {
-      apiFetcher: services.menuServices.getFoodMenu,
-      options: { params: { date: today.split("/").reverse().join("-") } },
-    },
-    [today]
-  );
-
-  const [activeCategory, setActiveCategory] = useState<string>("");
-  const [activeAddress, setActiveAddress] = useState<string>(
-    profileData["address.id"]
-  );
-
-  useEffect(() => {
-    if (!data || data.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveCategory(entry.target.id);
-          }
-        });
-      },
-      { root: null, rootMargin: "5px", threshold: 0.5 }
-    );
-
-    Object.values(foodListCategoryRefs.current).forEach(
-      (ref) => ref && observer.observe(ref)
-    );
-    return () => observer.disconnect();
-  }, [data]);
-
-  const handleCategoryClick = useCallback((category: string) => {
-    const section = foodListCategoryRefs.current[category];
-    const container = foodListContainerRef.current;
-
-    if (section && container) {
-      const offset = section.offsetTop - container.offsetTop;
-
-      container.scrollTo({
-        top: offset,
-        behavior: "smooth",
-      });
-
-      setActiveCategory(category);
-    } else {
-      console.error(`Section with id "${category}" not found.`);
-    }
-  }, []);
-
   const {
-    state: { orders },
-    action: { addOrder, decrement },
-  } = useMyStore((state) => state.orderSlice);
-
-  const userOrders = useMemo(
-    () =>
-      data
-        ?.flatMap((item) => item.food)
-        .filter((food) => orders[today]?.[food.id]) || [],
-    [data, orders, today]
-  );
-
-  const { totalPrice, totalQuantity } = useMemo(() => {
-    const total = userOrders.reduce(
-      (acc, food) => ({
-        price: acc.price + food.price * orders[today][food.id].count,
-        quantity: acc.quantity + orders[today][food.id].count,
-      }),
-      { price: 0, quantity: 0 }
-    );
-
-    return { totalPrice: total.price, totalQuantity: total.quantity };
-  }, [userOrders, orders, today]);
-
-  const handleScrollLeft = () => {
-    if (categoryRef.current) {
-      categoryRef.current.scrollTo({
-        left: categoryRef.current.scrollLeft - 200,
-        behavior: "smooth",
-      });
-    }
-  };
+    activeAddress,
+    activeCategory,
+    addOrder,
+    currentWeek,
+    decrement,
+    handleCategoryClick,
+    handleScrollLeft,
+    isSubmittingOrder,
+    refetch,
+    setActiveAddress,
+    totalPrice,
+    totalQuantity,
+    userBonuse,
+    activeDate,
+    data,
+    isLoading,
+    setActiveDate,
+    isPrevDate,
+    userOrders,
+    isGettingOrder,
+    profileData,
+    categoryRef,
+    foodListContainerRef,
+    foodListCategoryRefs,
+    orders,
+  } = useMenuLogic();
   return (
     <div className="flex flex-col gap-16 overflow-hidden">
       <div className="grid grid-cols-7 gap-16">
         <div className="col-span-5 ">
           <div className="grid grid-cols-7 gap-8 ">
             {currentWeek.map((item) => (
-              <div
+              <button
+                disabled={isPrevDate(item.date)}
                 key={item.date}
                 className={`bg-white gap-4 flex items-center  px-4 py-8 pl-28 shadow-cards rounded-lg cursor-pointer h-44 ${
-                  item.date === today ? "!bg-primary-500 !text-white" : ""
+                  item.date === activeDate
+                    ? "!bg-primary-500 !text-white"
+                    : isPrevDate(item.date) &&
+                      "!cursor-not-allowed !bg-alpha-text10"
                 }`}
-                onClick={() => setToday(item.date)}
+                onClick={() => setActiveDate(item.date)}
               >
                 <Text
                   variant="md"
-                  className={`rounded-full bg-alpha-border !h-28 min-h-28 !w-28 min-w-28 !text-center ${item.date === today ? "!bg-white !text-gray" : ""}`}
+                  className={`rounded-full bg-alpha-border !h-28 min-h-28 !w-28 min-w-28 !text-center ${item.date === activeDate ? "!bg-white !text-gray" : ""}`}
                 >
                   {item.day}
                 </Text>
                 <Text
                   variant="md"
                   className={
-                    item.date === today ? "!bg-primary-500 !text-white" : ""
+                    item.date === activeDate
+                      ? "!bg-primary-500 !text-white"
+                      : ""
                   }
                 >
                   {item.dayName}
                 </Text>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -285,11 +212,13 @@ const Index = (): ReactElement => {
                     <FoodCard
                       key={foodItem.id}
                       {...foodItem}
-                      onAdd={() => addOrder({ date: today, id: foodItem.id })}
-                      onRemove={() =>
-                        decrement({ date: today, id: foodItem.id })
+                      onAdd={() =>
+                        addOrder({ date: activeDate, id: foodItem.id })
                       }
-                      quantity={orders[today]?.[foodItem.id]?.count ?? 0}
+                      onRemove={() =>
+                        decrement({ date: activeDate, id: foodItem.id })
+                      }
+                      quantity={orders[activeDate]?.[foodItem.id]?.count ?? 0}
                     />
                   ))}
                 </div>
@@ -298,7 +227,7 @@ const Index = (): ReactElement => {
           </div>
         </div>
         <div className="col-span-2 px-4">
-          {isLoading ? (
+          {isLoading || isGettingOrder ? (
             <div className="min-w-[50%] w-full bg-alpha-text10 animate-pulse h-[60vh] inline-flex p-10 mx-2 px-18 rounded-lg cursor-pointer" />
           ) : userOrders.length ? (
             <div className="bg-white px-16 rounded-lg pb-16 flex flex-col">
@@ -310,9 +239,11 @@ const Index = (): ReactElement => {
                   <FoodCardInSideBar
                     key={item.id}
                     {...item}
-                    onAdd={() => addOrder({ date: today, id: item.id })}
-                    onRemove={() => decrement({ date: today, id: item.id })}
-                    quantity={orders[today]?.[item.id]?.count ?? 0}
+                    onAdd={() => addOrder({ date: activeDate, id: item.id })}
+                    onRemove={() =>
+                      decrement({ date: activeDate, id: item.id })
+                    }
+                    quantity={orders[activeDate]?.[item.id]?.count ?? 0}
                   />
                 ))}
               </div>
@@ -327,13 +258,29 @@ const Index = (): ReactElement => {
                   <Text size="sm" className="leading-4">
                     سهم شرکت
                   </Text>
+                  <Toman price={userBonuse} />
                 </div>
                 <div className="flex items-center justify-between">
                   <Text size="sm" className="leading-4">
                     سهم شما
                   </Text>
+                  <Toman price={totalPrice - userBonuse} />
                 </div>
-                <Button>تایید نهایی</Button>
+                <Button
+                  onClick={() => {
+                    refetch({
+                      address_id: Number(activeAddress),
+                      date: activeDate.split("/").reverse().join("-"),
+                      details: userOrders.map((item) => ({
+                        food_id: item.id,
+                        quantity: orders[activeDate][item.id].count,
+                      })),
+                    });
+                  }}
+                  isLoading={isSubmittingOrder}
+                >
+                  تایید نهایی
+                </Button>
               </div>
             </div>
           ) : (

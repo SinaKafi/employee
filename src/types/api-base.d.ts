@@ -20,7 +20,7 @@ type Pagination = {
 };
 
 interface metaData {
-  meta: Pagination[];
+  meta: Pagination;
   messages: string[];
 }
 

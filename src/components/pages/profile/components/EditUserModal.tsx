@@ -1,9 +1,11 @@
 import CustomInput from "@/components/common/CustomInput";
 import MyModal from "@/components/typographi/modal";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import useApi from "@/hooks/useQuery";
+import { services } from "@/services";
 import useMyStore from "@/store/store";
-import { Avatar, Button, Text } from "@chakra-ui/react";
-import { ExecOptionsWithStringEncoding } from "child_process";
-import React, { useEffect, useRef } from "react";
+import { Avatar, Button, Text, useToast } from "@chakra-ui/react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type pageProps = {
@@ -27,16 +29,47 @@ const EditUserModal: React.FC<pageProps> = (props) => {
   const { name, family, image } = useMyStore(
     (state) => state.userSlice.state.userData.profileData
   );
+  const toast = useToast();
+  const [isFromApi, setIsFromApi] = useState(true);
+  const { refetch: uploadImage } = useApi({
+    apiFetcher: services.userServices.saveImage,
+    options: {
+      autoFetch: false,
+      onSuccess(data) {
+        setValue("image", data.data[0]);
+        setIsFromApi(true);
+      },
+      onError() {
+        setIsFromApi(true);
+        setValue("image", image);
+
+        toast({
+          title: " متاسفانه با خطا مواجح شد",
+          status: "warning",
+          duration: 5000,
+          position: "top",
+          isClosable: true,
+        });
+      },
+    },
+  });
 
   const fileInputRef = useRef(null);
-  const { register, handleSubmit, reset, setValue, watch } =
-    useForm<FormValues>({
-      defaultValues: {
-        name: name ?? "",
-        family: family ?? "",
-        image: image ?? "",
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { isDirty },
+  } = useForm<FormValues>({
+    defaultValues: {
+      name: name ?? "",
+      family: family ?? "",
+      image: image ?? "",
+    },
+    reValidateMode: "onChange",
+  });
   const formField: formDatas[] = [
     {
       name: "name",
@@ -57,17 +90,36 @@ const EditUserModal: React.FC<pageProps> = (props) => {
       type: "text",
     },
   ];
+  const { refetch } = useCurrentUser();
+
   useEffect(() => {
     if (!props.isOpen) {
       reset();
     }
   }, [props.isOpen]);
 
+  const { refetch: editUser, isLoading } = useApi({
+    apiFetcher: services.userServices.editUser,
+    options: {
+      autoFetch: false,
+      onSuccess() {
+        refetch();
+        props.onClose();
+        reset();
+      },
+    },
+  });
   return (
     <MyModal {...props} size={"2xl"} header="ویرایش اطلاعات" isCentered>
       <form
         className="flex flex-col gap-24 p-16"
-        onSubmit={handleSubmit(() => {})}
+        onSubmit={handleSubmit(() => {
+          editUser({
+            name: watch("name"),
+            family: watch("family"),
+            image: watch("image"),
+          });
+        })}
       >
         <div className="w-full grid grid-cols-2 gap-16">
           {formField.map((item) =>
@@ -99,7 +151,11 @@ const EditUserModal: React.FC<pageProps> = (props) => {
                 <Text variant={"sm-regular"}>بارگزاری عکس</Text>
                 <div className="flex ">
                   <Avatar
-                    src={watch("image")}
+                    src={
+                      isFromApi
+                        ? `http://193.151.151.66/${watch("image")}`
+                        : watch("image")
+                    }
                     className="inline !rounded-lg !w-78 !h-78 ml-8 !cursor-pointer imageAvatar"
                     onClick={() => {
                       fileInputRef?.current?.click();
@@ -124,8 +180,11 @@ const EditUserModal: React.FC<pageProps> = (props) => {
                     if (file) {
                       const reader = new FileReader();
                       reader.onload = () => {
-                        if (reader.result) {
+                        console.log(file.size);
+                        if (reader.result && file.size) {
+                          uploadImage({ image: file });
                           setValue("image", reader.result as string);
+                          setIsFromApi(false);
                         }
                       };
                       reader.readAsDataURL(file);
@@ -146,7 +205,12 @@ const EditUserModal: React.FC<pageProps> = (props) => {
           )}
         </div>
         <div className="w-full flex items-end ">
-          <Button type="submit" className="!px-32 mr-auto">
+          <Button
+            type="submit"
+            className="!px-32 mr-auto"
+            isDisabled={!isDirty}
+            isLoading={isLoading}
+          >
             ثبت تغییرات
           </Button>
         </div>

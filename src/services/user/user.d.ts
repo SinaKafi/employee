@@ -70,31 +70,32 @@ interface ICurrentUserAddress {
   id: number;
   name: string;
   address: string;
-  company_id: string | number;
-  is_default: string | number;
-  lat: string;
-  long: string;
-  province: string;
-  district: string;
-  city: string;
-  unit: string;
-  plaque: string;
-  postcode: string;
-  deleted_at: string;
-  created_at: string | Date;
-  updated_at: string | Date;
+  company_id: number;
+  is_default: number;
+  lat: string | null;
+  long: string | null;
+  province: string | null;
+  district: string | null;
+  city: string | null;
+  unit: string | null;
+  plaque: string | null;
+  postcode: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
-export interface currentUser {
+
+interface currentUser {
   id: number;
   name: string;
   family: string;
+  image: string;
   mobile: string;
-  image: string | null;
-  company_id: number;
+  code: string;
   company_name: string;
-  addresses: ICurrentUserAddress[];
-  address_id: number;
+  address_title: string;
   address: string;
-  tel: string;
-  email: string;
+  address_id: number;
+  company_bonuse: number;
+  addresses: ICurrentUserAddress[];
 }

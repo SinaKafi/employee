@@ -5,36 +5,15 @@ import Header from "./Header";
 import useRouterDisclosure from "@/hooks/useRouterDisclosure";
 import MyModal from "../typographi/modal";
 import { useNavigate } from "react-router-dom";
-import useMyStore from "@/store/store";
-import useApi from "@/hooks/useQuery";
-import { services } from "@/services";
 import Spiner from "../common/Spiner";
+import useCurrentUser from "@/hooks/useCurrentUser";
 
 const CashLayout = ({ children }: PropsWithChildren) => {
   const { isOpen, onClose } = useRouterDisclosure("exit");
   const navigate = useNavigate();
-  const { action } = useMyStore((state) => state.userSlice);
-  const { isLoading, data } = useApi({
-    apiFetcher: services.userServices.getCurrentUser,
-    options: {
-      enabled: localStorage.getItem("token") ? true : false,
-      onSuccess(data) {
-        action.setProfileData(data.data);
-      },
-    },
-  });
+  const { data, isLoading } = useCurrentUser();
 
-  const { isLoading: addressLoading } = useApi({
-    apiFetcher: services.companyServices.addressList,
-    options: {
-      enabled: true,
-      onSuccess(data) {
-        action.setCompanyAddress(data.data);
-      },
-    },
-  });
-
-  return addressLoading || isLoading || !!!data ? (
+  return isLoading || !!!data ? (
     <div>
       <div className="flex justify-center items-center h-screen flex-col gap-8">
         <img src="/logo.svg" className="block object-cover" width={500} />

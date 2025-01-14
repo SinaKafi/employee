@@ -16,9 +16,14 @@ const orderSlice: StateCreator<IOrderSlice, [["zustand/devtools", never]]> = (
         addOrder: (payload) => {
           set(
             produce((state) => {
-              const { date, id } = payload;
+              const { date, id, quantity } = payload;
               if (!state.orderSlice.state.orders[date]) {
                 state.orderSlice.state.orders[date] = {};
+              }
+              if (quantity) {
+                state.orderSlice.state.orders[date][id] = { count: quantity };
+
+                return;
               }
               if (!state.orderSlice.state.orders[date][id]) {
                 state.orderSlice.state.orders[date][id] = { count: 1 };

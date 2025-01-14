@@ -88,3 +88,23 @@ export const getCurrentUser = (
     signal,
   });
 };
+
+export const saveImage = (
+  data: { image: File },
+  signal: AbortSignal
+): Promise<AxiosResponse<ApiResponse<any>>> => {
+  const body = formDataGenerator(data);
+  return axiosInstance.post(`/employee/image`, body, {
+    signal,
+  });
+};
+
+export const editUser = (
+  data: { name: string; family: string; image: string },
+  signal: AbortSignal
+): Promise<AxiosResponse<ApiResponse<any>>> => {
+  const body = formDataGenerator(data);
+  return axiosInstance.post(`/employee/profile/edit`, body, {
+    signal,
+  });
+};

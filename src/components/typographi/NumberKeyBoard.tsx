@@ -13,8 +13,6 @@ const NumberKeyBoard = ({
     let finalValue = typeof value === "string" ? value : String(value);
 
     setInputValue((prev) => {
-      // Handle "remove" case: remove last character
-      console.log(inputValue.length);
       if (finalValue === "remove" && prev.length <= 1) {
         return "";
       }

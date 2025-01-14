@@ -9,10 +9,6 @@ export const useTableState = (initialState, searchParams, navigate) => {
   const handleSearch = useCallback(() => {
     const newParams = new URLSearchParams(searchParams);
     const inputStringify = JSON.stringify(inputValue);
-    console.log(
-      (searchParams.size == 0 && inputValue.perPage == "10") ||
-        (searchParams.size == 0 && inputValue.query == "")
-    );
     if (
       (searchParams.size == 0 && inputValue.page == "1") ||
       (searchParams.size == 0 && inputValue.perPage == "10") ||

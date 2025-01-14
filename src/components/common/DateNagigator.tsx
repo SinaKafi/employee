@@ -7,14 +7,20 @@ import SVGChevronLeft from "../svgs/SVGChevronLeft";
 
 dayjs.extend(jalaliday);
 
-const PersianMonthNavigator = ({ value, onChange }) => {
+const PersianMonthNavigator = ({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange?: (_: string) => void;
+}) => {
   const [currentDate, setCurrentDate] = useState(
     value
       ? dayjs()
           .locale("fa")
           .calendar("jalali")
-          .month(+value.split("-")[0] - 1)
-          .year(+value.split("-")[1])
+          .year(Number(value.split(" ")[1])) // Year from value
+          .month(Number(value.split(" ")[0]) - 1) // Month from value (0-indexed)
       : dayjs().locale("fa").calendar("jalali")
   );
 
@@ -25,14 +31,12 @@ const PersianMonthNavigator = ({ value, onChange }) => {
   // Handle navigation
   const goToNextMonth = () => {
     setCurrentDate(currentDate.add(1, "month"));
-    onChange?.(
-      String(currentDate.add(1, "month").format("MM YYYY")).split(" ").join("-")
-    );
+    onChange?.(String(currentDate.add(1, "month").format("MM YYYY")));
   };
 
   const goToPrevMonth = () => {
     setCurrentDate(currentDate.subtract(1, "month"));
-    onChange?.(String(currentDate.subtract(1, "month").format("DD MM YYYY")));
+    onChange?.(String(currentDate.subtract(1, "month").format("MM YYYY")));
   };
   return (
     <div className="max-w-300 rounded-lg border py-8 px-16  flex gap-32 justify-between items-center">

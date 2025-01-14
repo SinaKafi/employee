@@ -135,7 +135,6 @@ const PersonaList = () => {
         onChange={(e) => {
           e.preventDefault();
           let files = e.target.files[0];
-          console.log(files);
           addFile({ file: files });
         }}
       />
